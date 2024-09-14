@@ -164,32 +164,83 @@ def setup_vectorstore_unstructured(doc_text, table_text, model_name="sentence-tr
   </figcaption>
 </figure>
 
-### Configuración de la Cadena RAG
 
-Creamos una cadena de generación aumentada por recuperación que utiliza los embeddings para recuperar documentos relevantes y generar respuestas usando el modelo Llama 3.
 
-**Funciones utilizadas**:
-
-- `vectorstore.as_retriever()`
-- `RetrievalQA.from_chain_type(llm, chain_type, retriever, verbose)`
-
-- **Retriever**: Recupera documentos similares a la consulta.
-- **Cadena LLM**: Genera respuestas utilizando los documentos recuperados como contexto.
-
-### Interfaz del Chatbot
+### Chatbot
 
 Implementamos una clase de chatbot que mantiene un historial de conversación y maneja las interacciones con el usuario.
 
-**Clase utilizada**: `RAGChatbot`
+```python
+class RAGChatbot:
+    def __init__(self, qa_chain, max_context_length=4096):
+        self.qa_chain = qa_chain
+        self.history = ""  # Historial de preguntas y respuestas
+        self.max_context_length = max_context_length  # Controlar el tamaño del contexto
 
-- **Gestión del Historial**: Mantiene un registro de interacciones previas para proporcionar contexto.
+    def add_to_history(self, question, answer):
+        """
+        Añadir la pregunta y la respuesta al historial.
+        """
+        self.history += f"Question: {question}\nAnswer: {answer}\n\n"
+
+        # Controlar la longitud del historial para que no sobrepase el máximo del modelo
+        if len(self.history) > self.max_context_length:
+            # Recortar el historial si es muy largo
+            self.history = self.history[-self.max_context_length:]
+
+    def get_chatbot_response(self, new_question):
+        """
+        Genera una respuesta a una nueva pregunta utilizando el historial como contexto.
+        """
+        # Concatenar el historial con la nueva pregunta
+        input_with_history = f"{self.history}\nQuestion: {new_question}"
+
+        # Obtener la respuesta del sistema RAG
+        start_time = time()
+        raw_response = self.qa_chain.run(input_with_history)
+        elapsed_time = round(time() - start_time, 3)
+
+        # Filtrar la respuesta usando el delimitador 'Answer:'
+        final_response = filter_delimited_response(raw_response, new_question, delimiter="Answer:")
+
+        # Añadir la nueva pregunta y respuesta al historial
+        self.add_to_history(new_question, final_response)
+
+        # Mostrar la respuesta
+        print(f"{final_response}\n\nTime taken: {elapsed_time} sec.\n")
+        return final_response
+
+    def chat(self):
+        """
+        Inicia el modo interactivo del chatbot, solicitando preguntas del usuario.
+        """
+        print("Bienvenido al chatbot. Escribe 'salir' para terminar la conversación.")
+
+        while True:
+            # Solicitar input del usuario
+            user_question = input("Tú: ")
+
+            # Verificar si el usuario desea terminar la conversación
+            if user_question.lower() in ['salir', 'exit']:
+                print("Chat terminado.")
+                break
+
+            # Generar y mostrar la respuesta del chatbot
+            self.get_chatbot_response(user_question)
+
+# Crear una instancia del chatbot
+chatbot = RAGChatbot(qa_chain=rag_chain)
+
+# Iniciar la interacción con el chatbot
+chatbot.chat()
+
+ ```
+
+- **Historial**: Mantiene un registro de interacciones previas para proporcionar contexto.
 - **Bucle Interactivo**: Solicita continuamente entradas del usuario y genera respuestas.
 
-### Configuraciones Clave
-
-- **Tokens Máximos**: Establecido para asegurar que las respuestas sean concisas y dentro de las limitaciones del modelo.
-- **Tamaño y Solapamiento de Fragmentos**: Optimizados para equilibrar el contexto y el rendimiento.
-- **Uso de Dispositivos**: Configurado para utilizar GPU si está disponible para una inferencia más rápida.
+- **Tokens Máximos**: Limitado a 4096 tokens de conexto, establecido para asegurar que las respuestas sean concisas y dentro de las limitaciones del modelo.
+- **Tamaño y Solapamiento de Fragmentos**: Chunks de 1000 Tokens con solapamientos de 100 Tokens.
 
 ## Resultados
 
