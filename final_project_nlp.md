@@ -2,15 +2,12 @@
 
 ## Introducción
 
-En el mundo actual, impulsado por datos, las organizaciones a menudo necesitan extraer información de grandes volúmenes de documentos, incluyendo PDFs confidenciales. Los métodos tradicionales de recuperación de información pueden ser ineficientes y pueden no manejar eficazmente consultas complejas. Para abordar este desafío, hemos desarrollado un chatbot que aprovecha la **Generación Aumentada por Recuperación (RAG)** y **Llama 3** para permitir consultas eficientes y seguras de documentos PDF locales. Este proyecto demuestra cómo las técnicas avanzadas de Procesamiento de Lenguaje Natural (PLN) pueden aplicarse para crear una herramienta poderosa para extraer información de datos no estructurados, garantizando al mismo tiempo la confidencialidad de los datos.
+En la actualidad, las organizaciones necesitan extraer información rápidamente de grandes volúmenes de documentos, incluyendo PDFs confidenciales. Los métodos tradicionales pueden ser ineficientes y propensos a errores, como las alucinaciones en modelos de lenguaje. Para mejorar la productividad y reducir estas alucinaciones, se desarrolla un chatbot que utiliza la **Generación Aumentada por Recuperación (RAG)** y **Llama 3** para permitir consultas eficientes y seguras de documentos PDF locales. Este proyecto demuestra cómo las técnicas avanzadas de Procesamiento de Lenguaje Natural (PLN) pueden crear una herramienta poderosa para extraer información de datos no estructurados, garantizando la confidencialidad y aumentando la precisión de las respuestas.
+
 
 *[Insertar una imagen que ilustre el problema de extraer información de PDFs]*
 
-## Teoría
 
-### Procesamiento de Lenguaje Natural (PLN)
-
-El **Procesamiento de Lenguaje Natural** es un campo de la inteligencia artificial que se centra en la interacción entre las computadoras y el lenguaje humano. Permite a las máquinas entender, interpretar y generar lenguaje humano de manera valiosa.
 
 ### Generación Aumentada por Recuperación (RAG)
 
