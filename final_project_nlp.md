@@ -5,8 +5,9 @@
 En la actualidad, las organizaciones necesitan extraer información rápidamente de grandes volúmenes de documentos, incluyendo PDFs confidenciales. Los métodos tradicionales pueden ser ineficientes y propensos a errores, como las alucinaciones en modelos de lenguaje. Para mejorar la productividad y reducir estas alucinaciones, se desarrolla un chatbot que utiliza la **Generación Aumentada por Recuperación (RAG)** y **Llama 3** para permitir consultas eficientes y seguras de documentos PDF locales. Este proyecto demuestra cómo las técnicas avanzadas de Procesamiento de Lenguaje Natural (PLN) pueden crear una herramienta poderosa para extraer información de datos no estructurados, garantizando la confidencialidad y aumentando la precisión de las respuestas.
 
 
-*[Insertar una imagen que ilustre el problema de extraer información de PDFs]*
-
+<p align="center">
+  <img src="https://github.com/cshernandez9702/mmia_usfq_nlp/blob/main/1.png" alt="Diagrama de Flujo del Proceso RAG" width="600">
+</p>
 
 
 ### Generación Aumentada por Recuperación (RAG)
