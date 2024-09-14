@@ -6,49 +6,42 @@ En la actualidad, las organizaciones necesitan extraer información rápidamente
 
 
 <p align="center">
-  <img src="https://github.com/cshernandez9702/mmia_usfq_nlp/blob/main/1.png" alt="Diagrama de Flujo del Proceso RAG" width="600">
+  <img src="https://github.com/cshernandez9702/mmia_usfq_nlp/blob/main/1.png" alt="Diagrama de Flujo del Proceso RAG" width="400">
 </p>
 
 
 ### Generación Aumentada por Recuperación (RAG)
 
-**RAG** es un método que combina modelos basados en recuperación con modelos basados en generación para producir respuestas más precisas y contextualmente relevantes. Recupera documentos relevantes de una base de conocimiento y los utiliza como contexto para generar respuestas a las consultas de los usuarios.
+**RAG** es un método que permite recuperar documentos relevantes de una base de conocimiento y los utilizarlos como contexto para generar respuestas a las consultas de los usuarios.
 
-*[Insertar un diagrama de flujo del proceso RAG, mostrando cómo interactúan los componentes de recuperación y generación]*
+<figure style="text-align: center;">
+  <img src="https://github.com/cshernandez9702/mmia_usfq_nlp/blob/main/2.png" alt="Diagrama de Flujo del Proceso RAG" width="1200">
+  <figcaption>
+    <em>Diagrama de Flujo del Proceso RAG. Fuente: <a href="https://blog.langchain.dev/semi-structured-multi-modal-rag/">Enlace a la fuente</a></em>
+  </figcaption>
+</figure>
 
 ### Llama 3
 
 **Llama 3** es un modelo de lenguaje grande desarrollado para entender y generar texto similar al humano. Destaca en diversas tareas de PLN y, cuando se afina adecuadamente, puede proporcionar respuestas detalladas y contextualmente precisas.
 
-### Combinación de RAG y Llama 3
+### RAG y Llama 3
 
-Al integrar RAG con Llama 3, mejoramos la capacidad del modelo para generar respuestas que son tanto contextualmente relevantes como informadas por el contenido específico de nuestros PDFs locales. Esta combinación nos permite construir un chatbot capaz de manejar consultas complejas sobre documentos confidenciales sin comprometer la seguridad de los datos.
+Al integrar RAG con Llama 3, mejoramos la capacidad del modelo para generar respuestas que son tanto contextualmente relevantes como informadas por el contenido específico de los PDFs locales. Esta combinación permite construir un chatbot capaz de manejar consultas complejas sobre documentos confidenciales sin comprometer la seguridad de los datos.
 
 ## Objetivos
 
 - **Desarrollar un chatbot** que pueda consultar documentos PDF locales utilizando RAG y Llama 3.
 - **Garantizar la confidencialidad de los datos** procesando los documentos localmente sin enviar datos a servidores externos.
-- **Proporcionar respuestas precisas y contextualmente relevantes** a las consultas de los usuarios aprovechando técnicas avanzadas de PLN.
-- **Crear una interfaz interactiva** para que los usuarios interactúen con el chatbot de manera fluida.
+- **Proporcionar respuestas precisas y contextualmente relevantes** a las consultas de los usuarios.
 
-## Materiales y Herramientas
 
-- **Lenguaje de Programación**: Python
-- **Librerías y Frameworks**:
-  - `transformers` (Hugging Face Transformers)
-  - `langchain`
-  - `torch` (PyTorch)
-  - `Chroma` (para almacenamiento vectorial)
-  - `unstructured` (para procesamiento de PDFs)
 - **Modelos**:
   - Llama 3 (8B parámetros)
   - Sentence Transformers para embeddings
 - **Datos**:
-  - Documentos PDF confidenciales
-- **Hardware**:
-  - Sistema con capacidad de GPU para inferencia del modelo (opcional pero recomendado)
+  - Documentos PDF locales
 
-## Implementación Detallada
 
 ### Visión General
 
