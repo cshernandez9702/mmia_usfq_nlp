@@ -45,46 +45,124 @@ Al integrar RAG con Llama 3, mejoramos la capacidad del modelo para generar resp
 
 ### Visión General
 
-El proyecto consta de varios componentes clave:
+Componentes:
 
 1. **Carga y Configuración del Modelo**: Carga del modelo Llama 3 y su tokenizador.
 2. **Carga y Procesamiento de PDFs**: Lectura de PDFs y extracción de contenido textual.
 3. **Generación de Embeddings y Configuración del Vector Store**: Conversión de texto en embeddings y almacenamiento usando Chroma.
-4. **Configuración de la Cadena RAG**: Creación de una cadena de generación aumentada por recuperación.
-5. **Interfaz del Chatbot**: Construcción de un chatbot interactivo que maneja las consultas de los usuarios.
+4. **Configuración de RAG**: Creación de un RAG CHAIN por recuperación.
+
 
 ### Carga y Configuración del Modelo
 
 Comenzamos cargando el modelo Llama 3 y su tokenizador. El modelo se configura para ejecutarse eficientemente en el hardware disponible, utilizando aceleración GPU si es posible.
 
-**Función utilizada**: `load_model_and_tokenizer(model_path)`
+```python
+def load_model_and_tokenizer(model_path):
+    start_time = time()
+    config = transformers.AutoConfig.from_pretrained(model_path,
+                                                     trust_remote_code=True,
+                                                     max_new_tokens=2048)
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_path,
+                                                              trust_remote_code=True,
+                                                              config=config,
+                                                              #quantization_config=quant_config,
+                                                              device_map='auto' )
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    print(f"Model and tokenizer loaded in {round(time() - start_time, 3)} sec.")
+    return model, tokenizer
+ ```
+
+
 
 - **Cuantización**: Aunque consideramos la cuantización de 8 bits para reducir el uso de memoria, optamos por cargar el modelo completo ya que disponíamos de recursos suficientes.
 - **Mapeo de Dispositivos**: El modelo se asigna automáticamente a los dispositivos disponibles (CPU o GPU).
 
 ### Carga y Procesamiento de PDFs usando la librería `unstructured`
 
-Para procesar los documentos PDF, utilizamos la librería `unstructured`, que permite extraer el texto de los PDFs sin incluir imágenes. Este paso es crucial para crear embeddings significativos.
+Para procesar los documentos PDF, utilizamos la librería `unstructured`, que permite extraer el texto de los PDFs sin incluir imágenes. Este paso es necesario para crear los embeddings.
 
-**Función utilizada**: `load_pdf_with_unstructured(pdf_path)`
 
-- **Extracción de Texto**: Nos enfocamos en el texto narrativo, texto regular, elementos de lista y tablas.
-- **Exclusión de Imágenes**: Se excluyen las imágenes para mantener la confidencialidad y centrarse en la información textual.
-- **Procesamiento Detallado**: Clasificamos y combinamos los diferentes tipos de contenido para su posterior procesamiento.
+```python
+# Cargar el archivo PDF usando unstructured (sin imágenes)
+def load_pdf_with_unstructured(pdf_path):
+    raw_pdf_elements = partition_pdf(
+        filename=pdf_path,                  # Ruta al archivo PDF
+        strategy="hi_res",                  # Estrategia de alta resolución
+        extract_images_in_pdf=False,        # No extraer imágenes dentro del PDF
+        extract_image_block_types=["Table"] # Extraer solo las tablas
+    )
 
-*[Insertar una imagen que muestre el proceso de extracción y clasificación de contenido de los PDFs]*
+    # Inicializar listas para cada tipo de contenido
+    Header, Footer, Title, NarrativeText, Text, ListItem, Tables = [], [], [], [], [], [], []
+
+    # Clasificar los elementos del PDF
+    for element in raw_pdf_elements:
+        element_type = str(type(element))
+        if "Header" in element_type:
+            Header.append(str(element))
+        elif "Footer" in element_type:
+            Footer.append(str(element))
+        elif "Title" in element_type:
+            Title.append(str(element))
+        elif "NarrativeText" in element_type:
+            NarrativeText.append(str(element))
+        elif "Text" in element_type:
+            Text.append(str(element))
+        elif "ListItem" in element_type:
+            ListItem.append(str(element))
+        elif "Table" in element_type:
+            Tables.append(str(element))  # Almacenar las tablas como texto
+
+    # Combinar los elementos que nos interesan para embeddings
+    combined_text = "\n".join(NarrativeText + Text + ListItem)
+    combined_tables = "\n".join(Tables)  # Combinar las tablas como texto adicional
+    return combined_text, combined_tables
+ ```
+
+
+
+- **Extracción de Texto**: texto narrativo, texto regular, elementos de lista y tablas.
+- **Exclusión de Imágenes**: Se excluyen las imágenes debido a que era necesario un modelo adicional para poder procesarlas. 
+- **Procesamiento**: Clasificamos y combinamos los diferentes tipos de contenido para su posterior procesamiento.
 
 ### Generación de Embeddings y Configuración del Vector Store
 
-Generamos embeddings a partir del texto extraído utilizando un modelo pre-entrenado de Sentence Transformer y los almacenamos usando Chroma para una recuperación eficiente.
+Generamos embeddings a partir del texto extraído utilizando un modelo pre-entrenado de Sentence Transformer y los almacenamos usando ChromaDB.
 
 **Función utilizada**: `setup_vectorstore_unstructured(doc_text, table_text, model_name)`
 
+```python
+def setup_vectorstore_unstructured(doc_text, table_text, model_name="sentence-transformers/all-mpnet-base-v2"):
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    embeddings = HuggingFaceEmbeddings(model_name=model_name, model_kwargs={"device": device})
+
+    # Usar RecursiveCharacterTextSplitter para dividir el texto y las tablas
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    chunks_text = splitter.split_text(doc_text)
+    chunks_tables = splitter.split_text(table_text)
+
+    # Crear los documentos en el formato esperado por Chroma
+    documents = [Document(page_content=chunk, metadata={"source": "unstructured_pdf_text"}) for chunk in chunks_text]
+    table_documents = [Document(page_content=chunk, metadata={"source": "unstructured_pdf_table"}) for chunk in chunks_tables]
+
+    # Combinar los documentos de texto y tablas
+    all_documents = documents + table_documents
+
+    # Crear el vector store a partir de los documentos
+    return Chroma.from_documents(all_documents, embeddings, persist_directory="./NLP_FINAL/chroma_db_unstructured")
+ ```
+
 - **División de Texto**: El texto se divide en fragmentos manejables para la generación de embeddings.
-- **Embeddings**: Los embeddings de alta calidad capturan el significado semántico, crucial para una recuperación precisa.
+- **Embeddings**: Los embeddings  capturan el significado semántico.
 - **Vector Store**: Chroma almacena los embeddings y facilita la búsqueda de similitud durante la recuperación.
 
-*[Insertar una imagen que represente el proceso de generación de embeddings y su almacenamiento en Chroma]*
+<figure style="text-align: center ;">
+  <img src="https://github.com/cshernandez9702/mmia_usfq_nlp/blob/main/3.png" alt="" width="400">
+  <figcaption>
+    <em>Diagrama de Flujo del Proceso RAG. Fuente: <a href="https://tech-depth-and-breadth.medium.com/my-notes-from-deeplearning-ais-course-on-advanced-retrieval-for-ai-with-chroma-2dbe24cc1c91">Enlace a la fuente</a></em>
+  </figcaption>
+</figure>
 
 ### Configuración de la Cadena RAG
 
